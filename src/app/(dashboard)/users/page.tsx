@@ -8,13 +8,13 @@ export default function UsersPage() {
   return (
     <>
       <PageHeader
-        title="Users"
-        description="Manage application users"
+        title="Usuarios"
+        description="Administrar registros de usuarios"
         action={
           <Link href="/users/new">
             <Button>
               <Plus className="mr-2 h-4 w-4" />
-              New User
+              Registrar
             </Button>
           </Link>
         }

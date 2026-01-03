@@ -1,25 +1,35 @@
 import { apiClient } from '@/lib/api-client';
-import type { User, CreateUserData, UpdateUserData } from '../types';
+import type { User, CreateUserData, UpdateUserData, UserPaged } from '../validators/user-validator';
 
 export const usersApi = {
-  getAll: async (): Promise<User[]> => {
-    const { data } = await apiClient.get<User[]>('/users');
+  getAll: async (page = 1, limit = 10): Promise<UserPaged> => {
+    const { data } = await apiClient.get<UserPaged>('/users', {
+      params: {page, limit}
+    });
     return data;
   },
 
   getById: async (id: string): Promise<User> => {
-    const { data } = await apiClient.get<User>(`/users/${id}`);
-    return data;
+    const response = await apiClient.get<{ success: boolean; data: User }>(`/users/${id}`);
+    return response.data.data;
   },
 
   create: async (userData: CreateUserData): Promise<User> => {
-    const { data } = await apiClient.post<User>('/users', userData);
-    return data;
+    try {
+      const response = await apiClient.post<{ success: boolean; data: User }>('/users', userData);
+      return response.data.data;
+    } catch (error: any) {
+      throw new Error(error?.message || 'Error al crear usuario');
+    }
   },
 
   update: async (id: string, userData: UpdateUserData): Promise<User> => {
-    const { data } = await apiClient.put<User>(`/users/${id}`, userData);
-    return data;
+    try {
+      const response = await apiClient.put<{ success: boolean; data: User }>(`/users/${id}`, userData);
+      return response.data.data;
+    } catch (error: any) {
+      throw new Error(error?.message || 'Error al actualizar usuario');
+    }
   },
 
   delete: async (id: string): Promise<void> => {

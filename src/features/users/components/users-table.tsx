@@ -14,36 +14,52 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { useUsers, useDeleteUser } from '../hooks/use-users';
-import type { User } from '../types';
+import type { User } from '../validators/user-validator';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+
+import { DataPagination } from '@/components/common/data-pagination';
+import { SkeletonTable } from '@/components/common/skeleton-table-loader';
 
 export function UsersTable() {
-  const { data: users, isLoading } = useUsers();
+  const { users, pagination, isLoading, goToPage } = useUsers();
   const deleteUserMutation = useDeleteUser();
   const router = useRouter();
+  const [userToDelete, setUserToDelete] = useState<string | null>(null);
 
   const handleEdit = (id: string) => {
     router.push(`/users/${id}`);
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this user?')) {
-      await deleteUserMutation.mutateAsync(id);
+  const confirmDelete = async () => {
+    if (userToDelete) {
+      await deleteUserMutation.mutateAsync(userToDelete);
+      setUserToDelete(null);
     }
   };
 
   if (isLoading) {
-    return <LoadingSpinner />;
+    return <SkeletonTable />;
   }
 
   if (!users || users.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">No users registered</p>
+        <p className="text-muted-foreground">No se encontraron registros</p>
       </div>
     );
   }
@@ -53,9 +69,8 @@ export function UsersTable() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Role</TableHead>
+            <TableHead>Nombre</TableHead>
+            <TableHead>Correo</TableHead>
             <TableHead className="w-[70px]"></TableHead>
           </TableRow>
         </TableHeader>
@@ -64,11 +79,6 @@ export function UsersTable() {
             <TableRow key={user.id}>
               <TableCell className="font-medium">{user.name}</TableCell>
               <TableCell>{user.email}</TableCell>
-              <TableCell>
-                <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-primary/10 text-primary">
-                  {user.role}
-                </span>
-              </TableCell>
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -80,14 +90,14 @@ export function UsersTable() {
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => handleEdit(user.id)}>
                       <Pencil className="mr-2 h-4 w-4" />
-                      Edit
+                      Editar
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => handleDelete(user.id)}
+                      onClick={() => setUserToDelete(user.id)}
                       className="text-destructive"
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
-                      Delete
+                      Eliminar
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -96,6 +106,33 @@ export function UsersTable() {
           ))}
         </TableBody>
       </Table>
+      {pagination && (
+        <DataPagination
+          currentPage={pagination.page}
+          totalPages={pagination.totalPages}
+          onPageChange={goToPage}
+        />
+      )}
+
+      <AlertDialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Esto eliminará permanentemente el usuario.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

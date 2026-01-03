@@ -1,14 +1,29 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usersApi } from '../api/users-api';
-import type { CreateUserData, UpdateUserData } from '../types';
+import type { CreateUserData, UpdateUserData } from '../validators/user-validator';
 import { toast } from '@/components/ui/use-toast';
+import { useState } from 'react';
 
-export const useUsers = () => {
-  return useQuery({
-    queryKey: ['users'],
-    queryFn: usersApi.getAll,
-  });
-};
+export function useUsers(initialPage = 1, initialLimit = 10) {
+  const [page, setPage] = useState(initialPage)
+  const [limit, setLimit] = useState(initialLimit)
+
+  const query = useQuery({
+    queryKey: ['users', page, limit],
+    queryFn: async () => {
+      const response = await usersApi.getAll(page, limit)
+      return response
+    }
+  })
+  return {
+    users: query.data?.data ?? [],
+    pagination: query.data?.pagination,
+    isLoading: query.isLoading,
+    error: query.error,
+    goToPage: setPage,
+    changeLimit: setLimit
+  }
+}
 
 export const useUser = (id: string) => {
   return useQuery({
@@ -26,14 +41,14 @@ export const useCreateUser = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast({
-        title: 'User created',
-        description: 'User has been created successfully',
+        title: 'Usuario Creado',
+        description: 'El usuario fue creado correctamente.',
       });
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: 'Error',
-        description: 'Could not create user',
+        description:  error.message,
         variant: 'destructive',
       });
     },
@@ -50,14 +65,14 @@ export const useUpdateUser = () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       queryClient.invalidateQueries({ queryKey: ['users', variables.id] });
       toast({
-        title: 'User updated',
-        description: 'User has been updated successfully',
+        title: 'Usuario actualizado',
+        description: 'El usuario fue actualizado correctamente',
       });
     },
     onError: () => {
       toast({
         title: 'Error',
-        description: 'Could not update user',
+        description: 'No se pudo actualizar el usuario',
         variant: 'destructive',
       });
     },
@@ -72,14 +87,14 @@ export const useDeleteUser = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast({
-        title: 'User deleted',
-        description: 'User has been deleted successfully',
+        title: 'Usuario eliminado',
+        description: 'El usuario fue eliminado correctamente',
       });
     },
     onError: () => {
       toast({
         title: 'Error',
-        description: 'Could not delete user',
+        description: 'No se pudo eliminar el usuario',
         variant: 'destructive',
       });
     },

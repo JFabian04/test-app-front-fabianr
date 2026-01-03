@@ -1,13 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCreateUser, useUpdateUser, useUser } from '../hooks/use-users';
-import type { CreateUserData } from '../types';
+import { createUserSchema, updateUserSchema, type CreateUserData, type UpdateUserData } from '../validators/user-validator';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { LoadingSpinner } from '@/components/common/loading-spinner';
 
 interface UserFormProps {
   userId?: string;
@@ -15,116 +18,97 @@ interface UserFormProps {
 
 export function UserForm({ userId }: UserFormProps) {
   const router = useRouter();
-  const [formData, setFormData] = useState<CreateUserData>({
-    name: '',
-    email: '',
-    password: '',
-    role: 'user',
-  });
 
-  const { data: user } = useUser(userId || '');
+  const { data: user, isLoading } = useUser(userId || '');
   const createMutation = useCreateUser();
   const updateMutation = useUpdateUser();
 
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<CreateUserData | UpdateUserData>({
+    resolver: zodResolver(userId ? updateUserSchema : createUserSchema),
+    defaultValues: {
+      name: '',
+      email: ''
+    },
+  });
+
   useEffect(() => {
-    if (user) {
-      setFormData({
+    if (user && userId) {
+      reset({
         name: user.name,
-        email: user.email,
-        password: '',
-        role: user.role,
+        email: user.email
       });
     }
-  }, [user]);
+  }, [user, userId, reset]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const onSubmit = async (data: CreateUserData | UpdateUserData) => {
     try {
       if (userId) {
-        const { password, ...updateData } = formData;
-        await updateMutation.mutateAsync({ id: userId, data: updateData });
+        await updateMutation.mutateAsync({ id: userId, data });
       } else {
-        await createMutation.mutateAsync(formData);
+        await createMutation.mutateAsync(data as CreateUserData);
       }
       router.push('/users');
-    } catch (error) {
-      // Error is already handled by the mutation hooks
+    } catch {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const isLoading = createMutation.isPending || updateMutation.isPending;
+  if (userId && isLoading) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <LoadingSpinner />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{userId ? 'Edit User' : 'New User'}</CardTitle>
+        <CardTitle>{userId ? 'Editar Usuario' : 'Formulario Registro'}</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="name">Nombre</Label>
             <Input
               id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
+              {...register('name')}
+              placeholder="Nombre completo"
             />
+            {errors.name && (
+              <p className="text-red-500 text-sm">{errors.name.message}</p>
+            )}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
-              name="email"
               type="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
+              {...register('email')}
+              placeholder="correo@ejemplo.com"
             />
-          </div>
-
-          {!userId && (
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                value={formData.password}
-                onChange={handleChange}
-                required={!userId}
-              />
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <Label htmlFor="role">Role</Label>
-            <Input
-              id="role"
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              required
-            />
+            {errors.email && (
+              <p className="text-red-500 text-sm">{errors.email.message}</p>
+            )}
           </div>
 
           <div className="flex gap-2">
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Saving...' : userId ? 'Update' : 'Create'}
+            <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+              {createMutation.isPending || updateMutation.isPending ? 'Guardando...' : userId ? 'Editar' : 'Guardar'}
             </Button>
             <Button
               type="button"
               variant="outline"
               onClick={() => router.push('/users')}
             >
-              Cancel
+              Cancelar
             </Button>
           </div>
         </form>

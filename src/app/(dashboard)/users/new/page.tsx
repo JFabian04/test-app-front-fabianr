@@ -5,8 +5,8 @@ export default function NewUserPage() {
   return (
     <>
       <PageHeader
-        title="New User"
-        description="Create a new user in the system"
+        title="Nuevo Usuario"
+        description="Realizar el registro de un nuevo usuario en el sistema"
       />
       
       <UserForm />
