@@ -18,7 +18,7 @@ export function Header() {
           onClick={toggleSidebar}
         >
           <Menu className="h-6 w-6" />
-          <span className="sr-only">Toggle Menu</span>
+          <span className="sr-only">Alternar menú</span>
         </Button>
         
         <div className="flex-1" />

@@ -11,8 +11,8 @@ export default async function UserEditPage({ params }: UserEditPageProps) {
   return (
     <>
       <PageHeader
-        title="Edit User"
-        description="Modify user information"
+        title="Editar Usuario"
+        description="Editar la información registrada para el usuario"
       />
       
       <UserForm userId={id} />

@@ -2,9 +2,9 @@ import { apiClient } from '@/lib/api-client';
 import type { User, CreateUserData, UpdateUserData, UserPaged } from '../validators/user-validator';
 
 export const usersApi = {
-  getAll: async (page = 1, limit = 10): Promise<UserPaged> => {
+  getAll: async (page = 1, limit = 10, search?: string): Promise<UserPaged> => {
     const { data } = await apiClient.get<UserPaged>('/users', {
-      params: {page, limit}
+      params: { page, limit, ...(search && { search }) }
     });
     return data;
   },
@@ -34,5 +34,12 @@ export const usersApi = {
 
   delete: async (id: string): Promise<void> => {
     await apiClient.delete(`/users/${id}`);
+  },
+
+  export: async (): Promise<Blob> => {
+    const response = await apiClient.get('/users/export', {
+      responseType: 'blob',
+    });
+    return response.data;
   },
 };

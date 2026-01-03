@@ -4,14 +4,15 @@ import type { CreateUserData, UpdateUserData } from '../validators/user-validato
 import { toast } from '@/components/ui/use-toast';
 import { useState } from 'react';
 
-export function useUsers(initialPage = 1, initialLimit = 10) {
+export function useUsers(initialPage = 1, initialLimit = 10, initialSearch?: string) {
   const [page, setPage] = useState(initialPage)
   const [limit, setLimit] = useState(initialLimit)
+  const [search, setSearch] = useState(initialSearch)
 
   const query = useQuery({
-    queryKey: ['users', page, limit],
+    queryKey: ['users', page, limit, search],
     queryFn: async () => {
-      const response = await usersApi.getAll(page, limit)
+      const response = await usersApi.getAll(page, limit, search)
       return response
     }
   })
@@ -21,7 +22,8 @@ export function useUsers(initialPage = 1, initialLimit = 10) {
     isLoading: query.isLoading,
     error: query.error,
     goToPage: setPage,
-    changeLimit: setLimit
+    changeLimit: setLimit,
+    setSearch: setSearch
   }
 }
 
@@ -69,10 +71,10 @@ export const useUpdateUser = () => {
         description: 'El usuario fue actualizado correctamente',
       });
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: 'Error',
-        description: 'No se pudo actualizar el usuario',
+        description: error.message,
         variant: 'destructive',
       });
     },

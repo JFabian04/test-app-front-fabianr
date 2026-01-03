@@ -52,8 +52,8 @@ export function UserForm({ userId }: UserFormProps) {
       } else {
         await createMutation.mutateAsync(data as CreateUserData);
       }
-      router.push('/users');
-    } catch {
+      router.push('/dashboard/users');
+    } catch (error) {
     }
   };
 
@@ -70,7 +70,7 @@ export function UserForm({ userId }: UserFormProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{userId ? 'Editar Usuario' : 'Formulario Registro'}</CardTitle>
+        <CardTitle>{userId ? 'Ingrese los nuevos valores' : 'Formulario de Registro'}</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -106,7 +106,7 @@ export function UserForm({ userId }: UserFormProps) {
             <Button
               type="button"
               variant="outline"
-              onClick={() => router.push('/users')}
+              onClick={() => router.push('/dashboard/users')}
             >
               Cancelar
             </Button>

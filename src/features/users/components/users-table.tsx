@@ -26,23 +26,28 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
-import { LoadingSpinner } from '@/components/common/loading-spinner';
-import { useUsers, useDeleteUser } from '../hooks/use-users';
+import { useDeleteUser } from '../hooks/use-users';
 import type { User } from '../validators/user-validator';
+import type { PaginationMeta } from '@/types/pagination';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-
 import { DataPagination } from '@/components/common/data-pagination';
 import { SkeletonTable } from '@/components/common/skeleton-table-loader';
 
-export function UsersTable() {
-  const { users, pagination, isLoading, goToPage } = useUsers();
+interface UsersTableProps {
+  users: User[];
+  pagination?: PaginationMeta;
+  isLoading: boolean;
+  goToPage: (page: number) => void;
+}
+
+export function UsersTable({ users, pagination, isLoading, goToPage }: UsersTableProps) {
   const deleteUserMutation = useDeleteUser();
   const router = useRouter();
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
 
   const handleEdit = (id: string) => {
-    router.push(`/users/${id}`);
+    router.push(`/dashboard/users/${id}`);
   };
 
   const confirmDelete = async () => {
